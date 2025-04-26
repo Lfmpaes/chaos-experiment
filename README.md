@@ -1,20 +1,24 @@
-
 # Engenharia do Caos com Chaos Toolkit, Node.js e Redis
+
+Aluno: Luiz Fernando Menezes Paes
+RA: 10309982
 
 Experimento Engenharia do Chaos com Chaos Toolkit [Chaos Toolkit](https://chaostoolkit.org/) com uma aplicação Node.js que utiliza Redis.
 
 ---
 
 ## Pré-reqs
-- Docker instalado
-- Python 3.8+ e pip
-- Node.js e npm
+
+-   Docker instalado
+-   Python 3.8+ e pip
+-   Node.js e npm
 
 ---
 
 ## Install Docker
 
 ### Ubuntu:
+
 ```bash
 sudo apt update
 sudo apt install -y docker.io
@@ -22,9 +26,11 @@ sudo systemctl enable docker
 sudo systemctl start docker
 sudo usermod -aG docker $USER
 ```
+
 > Reinicie a sessão após adicionar seu usuário ao grupo docker.
 
 ### macOS/Windows:
+
 Baixe e instale o [Docker Desktop](https://www.docker.com/products/docker-desktop).
 
 ---
@@ -32,12 +38,14 @@ Baixe e instale o [Docker Desktop](https://www.docker.com/products/docker-deskto
 ## Install Python e Chaos Toolkit
 
 ### Ubuntu/macOS:
+
 ```bash
 sudo apt install python3 python3-pip -y
 pip3 install -U chaostoolkit
 ```
 
 Verifique a instalação:
+
 ```bash
 chaos --version
 ```
@@ -52,16 +60,18 @@ docker run -d --name redis -p 6379:6379 redis
 
 ---
 
-##  Criar app Node.js com Redis
+## Criar app Node.js com Redis
 
 ### 1. Instalar Node.js e npm
 
 #### Ubuntu:
+
 ```bash
 sudo apt install nodejs npm -y
 ```
 
 #### macOS:
+
 ```bash
 brew install node
 ```
@@ -89,26 +99,29 @@ const port = 3000;
 const redisClient = createClient({ url: 'redis://localhost:6379' });
 
 redisClient.on('error', (err) => {
-  console.error('Erro no Redis:', err);
+    console.error('Erro no Redis:', err);
 });
 
-redisClient.connect().then(() => {
-  console.log('Conectado ao Redis');
-}).catch(console.error);
+redisClient
+    .connect()
+    .then(() => {
+        console.log('Conectado ao Redis');
+    })
+    .catch(console.error);
 
 app.get('/health', async (req, res) => {
-  try {
-    await redisClient.set('ping', 'pong');
-    const value = await redisClient.get('ping');
-    res.status(200).json({ status: 'ok', redis: value });
-  } catch (err) {
-    console.error('Erro no health check:', err);
-    res.status(500).json({ status: 'erro', message: err.message });
-  }
+    try {
+        await redisClient.set('ping', 'pong');
+        const value = await redisClient.get('ping');
+        res.status(200).json({ status: 'ok', redis: value });
+    } catch (err) {
+        console.error('Erro no health check:', err);
+        res.status(500).json({ status: 'erro', message: err.message });
+    }
 });
 
 app.listen(port, () => {
-  console.log(`App rodando em http://localhost:${port}`);
+    console.log(`App rodando em http://localhost:${port}`);
 });
 ```
 
@@ -134,58 +147,58 @@ chaos init experiment redis-failure
 
 ```json
 {
-  "version": "1.0.0",
-  "title": "Teste simples de falha no Redis",
-  "description": "Simula indisponibilidade do Redis e observa se o sistema continua funcional.",
-  "tags": ["redis", "chaos", "docker"],
-  "steady-state-hypothesis": {
-    "title": "Aplicação está saudável",
-    "probes": [
-      {
-        "type": "probe",
-        "name": "verifica_servico_aplicacao",
-        "tolerance": 200,
-        "provider": {
-          "type": "http",
-          "timeout": 3,
-          "url": "http://localhost:3000/health",
-          "method": "GET"
+    "version": "1.0.0",
+    "title": "Teste simples de falha no Redis",
+    "description": "Simula indisponibilidade do Redis e observa se o sistema continua funcional.",
+    "tags": ["redis", "chaos", "docker"],
+    "steady-state-hypothesis": {
+        "title": "Aplicação está saudável",
+        "probes": [
+            {
+                "type": "probe",
+                "name": "verifica_servico_aplicacao",
+                "tolerance": 200,
+                "provider": {
+                    "type": "http",
+                    "timeout": 3,
+                    "url": "http://localhost:3000/health",
+                    "method": "GET"
+                }
+            }
+        ]
+    },
+    "method": [
+        {
+            "type": "action",
+            "name": "parar_container_redis",
+            "provider": {
+                "type": "process",
+                "path": "docker",
+                "arguments": "stop redis"
+            }
+        },
+        {
+            "type": "probe",
+            "name": "verifica_servico_aplicacao_apos_falha",
+            "tolerance": 200,
+            "provider": {
+                "type": "http",
+                "timeout": 3,
+                "url": "http://localhost:3000/health",
+                "method": "GET"
+            }
+        },
+        {
+            "type": "action",
+            "name": "iniciar_container_redis",
+            "provider": {
+                "type": "process",
+                "path": "docker",
+                "arguments": "start redis"
+            }
         }
-      }
-    ]
-  },
-  "method": [
-    {
-      "type": "action",
-      "name": "parar_container_redis",
-      "provider": {
-        "type": "process",
-        "path": "docker",
-        "arguments": "stop redis"
-      }
-    },
-    {
-      "type": "probe",
-      "name": "verifica_servico_aplicacao_apos_falha",
-      "tolerance": 200,
-      "provider": {
-        "type": "http",
-        "timeout": 3,
-        "url": "http://localhost:3000/health",
-        "method": "GET"
-      }
-    },
-    {
-      "type": "action",
-      "name": "iniciar_container_redis",
-      "provider": {
-        "type": "process",
-        "path": "docker",
-        "arguments": "start redis"
-      }
-    }
-  ],
-  "rollbacks": []
+    ],
+    "rollbacks": []
 }
 ```
 
@@ -209,4 +222,3 @@ O Chaos Toolkit irá:
 4. Religar o Redis
 
 ---
-

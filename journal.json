@@ -1,0 +1,217 @@
+{
+  "chaoslib-version": "1.44.0",
+  "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "node": "Lfmpaes-PC",
+  "experiment": {
+    "version": "1.0.0",
+    "title": "Teste simples de falha no Redis",
+    "description": "Simula indisponibilidade do Redis e observa se o sistema continua funcional.",
+    "tags": [
+      "redis",
+      "chaos",
+      "docker"
+    ],
+    "steady-state-hypothesis": {
+      "title": "Aplicação está saudável",
+      "probes": [
+        {
+          "type": "probe",
+          "name": "verifica_servico_aplicacao",
+          "tolerance": 200,
+          "provider": {
+            "type": "http",
+            "timeout": 3,
+            "url": "http://192.168.15.13:3000/health",
+            "method": "GET"
+          }
+        }
+      ]
+    },
+    "method": [
+      {
+        "type": "action",
+        "name": "parar_container_redis",
+        "provider": {
+          "type": "process",
+          "path": "docker",
+          "arguments": "stop redis"
+        }
+      },
+      {
+        "type": "probe",
+        "name": "verifica_servico_aplicacao_apos_falha",
+        "tolerance": 200,
+        "provider": {
+          "type": "http",
+          "timeout": 3,
+          "url": "http://192.168.15.13:3000/health",
+          "method": "GET"
+        }
+      },
+      {
+        "type": "action",
+        "name": "iniciar_container_redis",
+        "provider": {
+          "type": "process",
+          "path": "docker",
+          "arguments": "start redis"
+        }
+      }
+    ],
+    "rollbacks": [],
+    "dry": null
+  },
+  "start": "2025-04-26T00:12:46.036684+00:00",
+  "status": "completed",
+  "deviated": false,
+  "steady_states": {
+    "before": {
+      "steady_state_met": true,
+      "probes": [
+        {
+          "activity": {
+            "type": "probe",
+            "name": "verifica_servico_aplicacao",
+            "tolerance": 200,
+            "provider": {
+              "type": "http",
+              "timeout": 3,
+              "url": "http://192.168.15.13:3000/health",
+              "method": "GET"
+            }
+          },
+          "output": {
+            "status": 200,
+            "headers": {
+              "X-Powered-By": "Express",
+              "Content-Type": "application/json; charset=utf-8",
+              "Content-Length": "30",
+              "ETag": "W/\"1e-UF0jTsFD9vB+n1yXcauIzFvQUGs\"",
+              "Date": "Sat, 26 Apr 2025 00:12:47 GMT",
+              "Connection": "keep-alive",
+              "Keep-Alive": "timeout=5"
+            },
+            "body": "{\"status\":\"ok\",\"redis\":\"pong\"}"
+          },
+          "start": "2025-04-26T00:12:46.051828+00:00",
+          "status": "succeeded",
+          "end": "2025-04-26T00:12:46.062108+00:00",
+          "duration": 0.01028,
+          "tolerance_met": true
+        }
+      ]
+    },
+    "after": {
+      "steady_state_met": true,
+      "probes": [
+        {
+          "activity": {
+            "type": "probe",
+            "name": "verifica_servico_aplicacao",
+            "tolerance": 200,
+            "provider": {
+              "type": "http",
+              "timeout": 3,
+              "url": "http://192.168.15.13:3000/health",
+              "method": "GET"
+            }
+          },
+          "output": {
+            "status": 200,
+            "headers": {
+              "X-Powered-By": "Express",
+              "Content-Type": "application/json; charset=utf-8",
+              "Content-Length": "30",
+              "ETag": "W/\"1e-UF0jTsFD9vB+n1yXcauIzFvQUGs\"",
+              "Date": "Sat, 26 Apr 2025 00:12:48 GMT",
+              "Connection": "keep-alive",
+              "Keep-Alive": "timeout=5"
+            },
+            "body": "{\"status\":\"ok\",\"redis\":\"pong\"}"
+          },
+          "start": "2025-04-26T00:12:47.143442+00:00",
+          "status": "succeeded",
+          "end": "2025-04-26T00:12:47.187912+00:00",
+          "duration": 0.04447,
+          "tolerance_met": true
+        }
+      ]
+    },
+    "during": []
+  },
+  "run": [
+    {
+      "activity": {
+        "type": "action",
+        "name": "parar_container_redis",
+        "provider": {
+          "type": "process",
+          "path": "docker",
+          "arguments": "stop redis"
+        }
+      },
+      "output": {
+        "status": 0,
+        "stdout": "redis\n",
+        "stderr": ""
+      },
+      "start": "2025-04-26T00:12:46.074813+00:00",
+      "status": "succeeded",
+      "end": "2025-04-26T00:12:46.812849+00:00",
+      "duration": 0.738036
+    },
+    {
+      "activity": {
+        "type": "probe",
+        "name": "verifica_servico_aplicacao_apos_falha",
+        "tolerance": 200,
+        "provider": {
+          "type": "http",
+          "timeout": 3,
+          "url": "http://192.168.15.13:3000/health",
+          "method": "GET"
+        }
+      },
+      "output": {
+        "status": 500,
+        "headers": {
+          "X-Powered-By": "Express",
+          "Content-Type": "application/json; charset=utf-8",
+          "Content-Length": "56",
+          "ETag": "W/\"38-pUelIrK2PdTtUtQueBGZTCWgTgI\"",
+          "Date": "Sat, 26 Apr 2025 00:12:48 GMT",
+          "Connection": "keep-alive",
+          "Keep-Alive": "timeout=5"
+        },
+        "body": "{\"status\":\"erro\",\"message\":\"Socket closed unexpectedly\"}"
+      },
+      "start": "2025-04-26T00:12:46.822028+00:00",
+      "status": "succeeded",
+      "end": "2025-04-26T00:12:46.915732+00:00",
+      "duration": 0.093704
+    },
+    {
+      "activity": {
+        "type": "action",
+        "name": "iniciar_container_redis",
+        "provider": {
+          "type": "process",
+          "path": "docker",
+          "arguments": "start redis"
+        }
+      },
+      "output": {
+        "status": 0,
+        "stdout": "redis\n",
+        "stderr": ""
+      },
+      "start": "2025-04-26T00:12:46.918626+00:00",
+      "status": "succeeded",
+      "end": "2025-04-26T00:12:47.130052+00:00",
+      "duration": 0.211426
+    }
+  ],
+  "rollbacks": [],
+  "end": "2025-04-26T00:12:47.199491+00:00",
+  "duration": 1.1652209758758545
+}
